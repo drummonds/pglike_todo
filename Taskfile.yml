@@ -1,0 +1,35 @@
+version: "3"
+
+vars:
+  BINARY: pglike_todo
+
+tasks:
+  build:
+    desc: Build the binary
+    cmds:
+      - go build -o {{.BINARY}} .
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test -v ./...
+
+  run:
+    desc: Build and run the server
+    deps: [build]
+    cmds:
+      - ./{{.BINARY}}
+
+  clean:
+    desc: Remove build artifacts
+    cmds:
+      - rm -f {{.BINARY}}
+
+  release:
+    desc: 'Create a GitHub release (usage: task release VERSION=v0.1.0 COMMENT="Initial release")'
+    requires:
+      vars: [VERSION, COMMENT]
+    cmds:
+      - git tag -a {{.VERSION}} -m "{{.COMMENT}}"
+      - git push origin {{.VERSION}}
+      - gh release create {{.VERSION}} --title "{{.VERSION}}" --notes "{{.COMMENT}}"
