@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	_ "embed"
 	"flag"
 	"fmt"
 	"html"
@@ -14,6 +15,9 @@ import (
 	_ "github.com/drummonds/go-postgres"
 	"github.com/drummonds/lofigui"
 )
+
+//go:embed templates/todo.html
+var todoTemplateHTML string
 
 var db *sql.DB
 
@@ -197,9 +201,19 @@ func main() {
 	}
 	defer db.Close()
 
+	tmpFile, err := os.CreateTemp("", "todo-template-*.html")
+	if err != nil {
+		log.Fatalf("Failed to create temp file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+	if _, err := tmpFile.WriteString(todoTemplateHTML); err != nil {
+		log.Fatalf("Failed to write template: %v", err)
+	}
+	tmpFile.Close()
+
 	ctrl, err := lofigui.NewController(lofigui.ControllerConfig{
 		Name:         "Todo List",
-		TemplatePath: "templates/todo.html",
+		TemplatePath: tmpFile.Name(),
 	})
 	if err != nil {
 		log.Fatalf("Failed to create controller: %v", err)
